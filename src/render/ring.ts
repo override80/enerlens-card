@@ -61,8 +61,14 @@ export function ringGeometry(nodePx: number): { r: number; strokeWidth: number }
  * window; the ring only draws them.
  */
 export interface RingTools {
-  /** Tooltip of a segment - name, figure, share. Empty for none. */
+  /** Tooltip text of a segment - name, figure, share. Empty for none. */
   label: (segment: Segment) => string;
+  /**
+   * The pointer is over a segment (or, with null, has left it). The card shows its own tooltip:
+   * a native <title> waits a second, vanishes whenever the card redraws under the pointer and
+   * never shows in the app's web view.
+   */
+  hover?: (segment: Segment | null, ev: PointerEvent) => void;
   /** A tap on a segment; only offered where the segment has something to open. */
   select?: (segment: Segment, ev: Event) => void;
   /** Whether a segment opens anything - the pointer and the hover follow it. */
@@ -178,8 +184,11 @@ export function renderRing(
         data-offset=${arc.offset.toFixed(2)}
         data-circ=${circumference.toFixed(2)}
         data-gap=${(segments.length > 1 ? gap : 0).toFixed(2)}
+        data-label=${text || nothing}
         @click=${opens ? (ev: Event) => tools?.select?.(arc.segment, ev) : nothing}
-      >${text ? svg`<title>${text}</title>` : nothing}</circle>`;
+        @pointermove=${text && tools?.hover ? (ev: PointerEvent) => tools.hover?.(arc.segment, ev) : nothing}
+        @pointerleave=${text && tools?.hover ? (ev: PointerEvent) => tools.hover?.(null, ev) : nothing}
+      ></circle>`;
       },
     )}</g>
   </svg>`;
