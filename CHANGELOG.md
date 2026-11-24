@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `last_month` for `view.energy_periods` - the whole calendar day, week or
   month before the running one, in the quick button, the chip and the detail
   window. Not offered unless switched on.
+- **`flow.line_scale` (YAML): lines grow with the flow they carry.** The busiest
+  line of the view is this many times as wide as its base width (1-6), the
+  others in proportion by the square root, so a small flow still shows. It
+  applies to the connections and to the lines to the list, in the power view
+  and in every energy period - a period is just another set of flows, so the
+  lines show where a day, a week or a month went. 1, the default, keeps all
+  lines alike.
 
 ## [1.5.2] - 2026-11-06
 
