@@ -656,9 +656,9 @@ describe("ring tooltip and tap (REQ R-8)", () => {
     w: share * 1000,
   });
 
-  it("is only a picture without tools: no title, no tap", () => {
+  it("is only a picture without tools: no label, no tap", () => {
     const host = show([named("a", 0.6, "sensor.a"), named("b", 0.4, "sensor.b")]);
-    expect(host.querySelectorAll("circle title")).toHaveLength(0);
+    expect(host.querySelectorAll("circle[data-label]")).toHaveLength(0);
     expect(host.querySelectorAll("circle.selectable")).toHaveLength(0);
   });
 
@@ -668,15 +668,18 @@ describe("ring tooltip and tap (REQ R-8)", () => {
     });
     const titles = [...host.querySelectorAll("circle")].map((c) => ({
       key: c.getAttribute("data-key"),
-      title: c.querySelector("title")?.textContent,
+      title: c.getAttribute("data-label"),
     }));
     expect(titles).toContainEqual({ key: "a", title: "A: 600 W" });
     expect(titles).toContainEqual({ key: "b", title: "B: 400 W" });
   });
 
-  it("leaves a segment without a label without a title", () => {
-    const host = show([named("a", 1)], { label: () => "" });
-    expect(host.querySelectorAll("circle title")).toHaveLength(0);
+  it("leaves a segment without a label unlabelled and silent", () => {
+    const seen: unknown[] = [];
+    const host = show([named("a", 1)], { label: () => "", hover: (s) => seen.push(s) });
+    expect(host.querySelectorAll("circle[data-label]")).toHaveLength(0);
+    host.querySelector("circle")?.dispatchEvent(new Event("pointermove"));
+    expect(seen).toEqual([]);
     expect(host.querySelector("circle")?.classList.contains("named")).toBe(false);
   });
 
@@ -693,6 +696,19 @@ describe("ring tooltip and tap (REQ R-8)", () => {
     a?.dispatchEvent(new Event("click"));
     b?.dispatchEvent(new Event("click"));
     expect(picked).toEqual(["a"]);
+  });
+
+  it("tells the card when the pointer is over a segment and when it has left (R-8)", () => {
+    const seen: (string | null)[] = [];
+    const host = show([named("a", 0.6, "sensor.a"), named("b", 0.4)], {
+      label: (s) => `${s.name}`,
+      hover: (s) => seen.push(s ? s.key : null),
+    });
+    const [a, b] = [host.querySelector('[data-key="a"]'), host.querySelector('[data-key="b"]')];
+    a?.dispatchEvent(new Event("pointermove"));
+    b?.dispatchEvent(new Event("pointermove"));
+    b?.dispatchEvent(new Event("pointerleave"));
+    expect(seen).toEqual(["a", "b", null]);
   });
 
   it("lets pointers reach a segment, which the ring box itself does not", () => {

@@ -682,6 +682,27 @@ export const styles = css`
     stroke-opacity: 0.8;
   }
 
+  /* The ring's tooltip (R-8): shown at once, hidden again when the pointer leaves the segment. */
+  ha-card {
+    position: relative;
+  }
+  .ring-tip {
+    position: absolute;
+    z-index: 10;
+    pointer-events: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    white-space: nowrap;
+    background: var(--primary-text-color, #212121);
+    color: var(--card-background-color, #fff);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+  .ring-tip[hidden] {
+    display: none;
+  }
+
   /* ring.animation: fade - a place takes on its new consumer's colour over the
      ring's glide (RING_GLIDE_MS), ease-out like the spring that moves it. Only
      the colour: geometry stays with RingAnimator. The class is only there while

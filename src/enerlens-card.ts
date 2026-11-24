@@ -866,6 +866,26 @@ class EnerLensCard extends LitElement {
    * the detail window (REQ DF-2). In the editor's preview it would cover the
    * editor - there the entity of the running direction opens, as before.
    */
+  /**
+   * The ring's tooltip (R-8): written straight into its element, so a pointer moving over the
+   * ring never costs a render. Empty text hides it. Kept inside the card and clear of its edge.
+   */
+  private _showRingTip(text: string, ev: PointerEvent): void {
+    const tip = this.shadowRoot?.querySelector<HTMLElement>(".ring-tip");
+    const card = this.shadowRoot?.querySelector<HTMLElement>("ha-card");
+    if (!tip || !card) return;
+    if (!text) {
+      tip.hidden = true;
+      return;
+    }
+    tip.textContent = text;
+    tip.hidden = false;
+    const box = card.getBoundingClientRect();
+    const left = Math.min(ev.clientX - box.left + 12, box.width - tip.offsetWidth - 4);
+    tip.style.left = `${Math.max(4, left)}px`;
+    tip.style.top = `${Math.max(4, ev.clientY - box.top - tip.offsetHeight - 10)}px`;
+  }
+
   private _onDetail = (ev: Event): void => {
     ev.stopPropagation();
     if (this._example) return;
@@ -2108,11 +2128,15 @@ class EnerLensCard extends LitElement {
     const ringTools = (solar: boolean): RingTools => {
       const hass = ringHass;
       const config = ringConfig;
-      return {
-        label: (segment) =>
-          segment.name && segment.w !== undefined
-            ? `${segment.name}: ${formatPower(segment.w, hass, config.power)} (${formatPercent(segment.share * 100, hass)})`
-            : "",
+      const tools: RingTools = {
+        label: (segment) => {
+          // The rest row has no configured name by default: the interface language's "Other" (L-5).
+          const name = segment.name || (segment.isRest ? localize("list.rest", hass) : "");
+          return name && segment.w !== undefined
+            ? `${name}: ${formatPower(segment.w, hass, config.power)} (${formatPercent(segment.share * 100, hass)})`
+            : "";
+        },
+        hover: (segment, ev) => this._showRingTip(segment ? tools.label(segment) : "", ev),
         selectable: (segment) =>
           segment.isRest
             ? config.sources.house.kind === "single"
@@ -2127,6 +2151,7 @@ class EnerLensCard extends LitElement {
           openEntry(segment.entity ?? "", ev, detail);
         },
       };
+      return tools;
     };
 
     // Header, drawing, fans and lists as one block: limited, it keeps them
@@ -2138,6 +2163,7 @@ class EnerLensCard extends LitElement {
         @hass-more-info=${this._onMoreInfo}
         @enerlens-detail=${this._onDetail}
       >
+        <div class="ring-tip" role="tooltip" hidden></div>
         <div
           class="content align-${content?.align ?? "center"}"
           style=${content ? `max-width: ${content.maxWidth}px` : ""}
