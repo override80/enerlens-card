@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   consumer or PV ring shows its name, its figure (W, or kWh in the energy
   mode) and its share of the ring; a tap opens the same window as a tap on its
   row. The rest segment opens the house window where the row does.
+- **Past periods in the energy mode:** `yesterday`, `last_week` and
+  `last_month` for `view.energy_periods` - the whole calendar day, week or
+  month before the running one, in the quick button, the chip and the detail
+  window. Not offered unless switched on.
 
 ## [1.5.2] - 2026-11-06
 
