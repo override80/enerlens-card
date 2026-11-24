@@ -42,6 +42,7 @@ import {
   timeZoneOf,
 } from "./energy-view";
 import { computeFlows, dotParams, planDots } from "./flow";
+import { formatPercent, formatPower } from "./format";
 import { HoldTracker } from "./hold";
 import { localize } from "./localize";
 import { buildModel, buildModelFrom, readPowerW } from "./model";
@@ -75,7 +76,7 @@ import {
 } from "./render/header";
 import { GLIDE_MS, RowAnimator, renderList, renderSolarSide } from "./render/list";
 import { mayStretchPaths, measurePathZoom } from "./render/path-zoom";
-import { RingAnimator } from "./render/ring";
+import { RingAnimator, type RingTools } from "./render/ring";
 import { sizeFactors } from "./render/sizing";
 import { buildSolarRows, refreshSolarRows, solarSegments } from "./solar";
 import { SolarMemory } from "./solar-memory";
@@ -2081,6 +2082,34 @@ class EnerLensCard extends LitElement {
         ? openDetail(ev.currentTarget as EventTarget, { node: detail, entity: entity || undefined })
         : openMoreInfo(ev.currentTarget as EventTarget, entity);
 
+    // The ring says what a segment is, in the figure the row shows (R-8), and a
+    // tap opens what a tap on the row opens - the same window (DF-15).
+    const ringHass = this._hass;
+    const ringConfig = this._config;
+    const ringTools = (solar: boolean): RingTools => {
+      const hass = ringHass;
+      const config = ringConfig;
+      return {
+        label: (segment) =>
+          segment.name && segment.w !== undefined
+            ? `${segment.name}: ${formatPower(segment.w, hass, config.power)} (${formatPercent(segment.share * 100, hass)})`
+            : "",
+        selectable: (segment) =>
+          segment.isRest
+            ? config.sources.house.kind === "single"
+            : segment.entity !== undefined && segment.entity !== "",
+        select: (segment, ev) => {
+          ev.stopPropagation();
+          const detail: DetailNode = segment.isRest
+            ? "rest"
+            : solar
+              ? `source:${segment.key}`
+              : `consumer:${segment.key}`;
+          openEntry(segment.entity ?? "", ev, detail);
+        },
+      };
+    };
+
     // Header, drawing, fans and lists as one block: limited, it keeps them
     // together and every width rule measures it rather than the card (AN-7).
     const content = this._config.content;
@@ -2131,6 +2160,7 @@ class EnerLensCard extends LitElement {
               this._holeR,
               this._seeThrough,
               solarRing,
+              { house: ringTools(false), solar: ringTools(true) },
             )}
             ${renderList(breakdown, shown, this._hass, openEntry, this._stacked, solarRows, solarApart)}
           </div>
